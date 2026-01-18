@@ -1,0 +1,39 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - opentender_db:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/opentender.db
+    command: sh -c "mkdir -p /app/data && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    networks:
+      - opentender-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    command: npm run dev -- --host
+    depends_on:
+      - backend
+    networks:
+      - opentender-network
+
+volumes:
+  opentender_db:
+
+networks:
+  opentender-network:
+    driver: bridge
